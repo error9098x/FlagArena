@@ -13,6 +13,7 @@ import { requireCondition, HttpError } from "../http/errors.js";
 import { compareSecret, hashSecret, verificationCode } from "./secrets.js";
 import { consumeLimit } from "./rate-limit.js";
 import { sendEmail } from "./email.js";
+import { verificationEmail } from "./emailTemplates.js";
 
 async function deliverCode(
   db: DataSource,
@@ -37,6 +38,7 @@ async function deliverCode(
     email,
     "Verify your email",
     `Your FlagArena verification code is ${code}. It expires in 10 minutes.`,
+    verificationEmail(code),
   );
 }
 

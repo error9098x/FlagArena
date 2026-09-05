@@ -9,6 +9,7 @@ export async function sendEmail(
   to: string,
   subject: string,
   text: string,
+  html?: string,
 ) {
   // Seed identities use reserved .test domains, never real inboxes.
   if (config.DEMO_MODE === "1" && to.toLowerCase().endsWith(".test")) return;
@@ -34,6 +35,7 @@ export async function sendEmail(
         to: [to],
         subject,
         text,
+        ...(html && { html }),
       }),
     });
     if (!response.ok) throw new Error("Email rejected");
