@@ -115,7 +115,8 @@ describe("trust boundaries", () => {
     expect(await compareSecret(prefix + "A", hash)).toBe(true);
     expect(await compareSecret(prefix + "B", hash)).toBe(false);
     expect(await compareSecret(prefix + "a", hash)).toBe(false);
-  });
+    // Four bcrypt operations exceed the 5s default on small shared-vCPU VMs.
+  }, 60000);
 });
 describe("eligibility and lifecycle", () => {
   it("rejects Admin participation and self-authored scoring", () => {
