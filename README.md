@@ -1,5 +1,6 @@
 <p align="center"><img src="docs/assets/logo.svg" alt="FlagArena" width="360"></p>
 <p align="center">Your arena. Your rules.<br>A self-hosted home for hands-on security.</p>
+<p align="center"><strong>Live at <a href="https://flagarena.kaintura.com">flagarena.kaintura.com</a></strong></p>
 
 FlagArena brings challenge authors, players, and event organizers together. Publish file-based puzzles, review submissions, run timed events, and keep practice progress separate from competition results.
 
