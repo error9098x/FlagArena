@@ -9,6 +9,15 @@ import install
 
 
 class InstallerTests(unittest.TestCase):
+    def test_supported_operating_systems(self):
+        self.assertEqual(install.os_release('ID=debian\nVERSION_ID="12"\n'), ('debian', '12'))
+        self.assertEqual(install.os_release('ID=ubuntu\nVERSION_ID="22.04"\n'), ('ubuntu', '22.04'))
+        self.assertEqual(install.os_release('ID=ubuntu\nVERSION_ID="24.04"\n'), ('ubuntu', '24.04'))
+
+    def test_unsupported_operating_system_reports_detected_version(self):
+        with self.assertRaisesRegex(RuntimeError, 'debian 11'):
+            install.os_release('ID=debian\nVERSION_ID="11"\n')
+
     def test_domain(self):
         self.assertEqual(install.domain_name('Arena.Example.com'), 'arena.example.com')
         for value in ('https://example.com', '127.0.0.1', 'x;rm.example.com', 'example.com/a', 'example..com', '-bad.example.com'):

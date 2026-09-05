@@ -13,7 +13,7 @@ FlagArena brings challenge authors, players, and event organizers together. Publ
 
 ## Deploy a populated demo on GCP
 
-Use a fresh **Ubuntu 24.04 LTS VM**, a reserved external IPv4 address, a domain you control, and a verified Resend sender. Copy or clone this repository onto the VM, then run from the project root over SSH:
+Use a fresh **Debian 12/13 or Ubuntu 22.04/24.04 LTS VM**, a reserved external IPv4 address, a domain you control, and a verified Resend sender. Copy or clone this repository onto the VM, then run from the project root over SSH:
 
 ```sh
 sudo bash deploy/gcp-vm.sh

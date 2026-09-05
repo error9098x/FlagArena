@@ -4,7 +4,7 @@ This guide installs a **populated demonstration instance**, including seeded use
 
 ## Before you start
 
-Use a fresh, dedicated Ubuntu 24.04 LTS Compute Engine VM (x86_64 or arm64), with at least 2 vCPU, 4 GB RAM, and 20 GB free disk as a practical starting point. The installer refuses an existing Node.js/PostgreSQL installation or a previous FlagArena install. It does not create or bill GCP resources for you.
+Use a fresh, dedicated Debian 12/13 or Ubuntu 22.04/24.04 LTS Compute Engine VM (x86_64 or arm64). At least 2 vCPU, 4 GB RAM, and 20 GB disk is the comfortable starting point. An `e2-micro` can run a small demonstration; when total RAM plus swap is below 3 GB, the installer creates a private 2 GB `/swapfile` before building. Make sure the boot disk has at least 6 GB free. The installer refuses an existing Node.js/PostgreSQL installation or a previous FlagArena install. It does not create or bill GCP resources for you.
 
 Prepare:
 
@@ -31,6 +31,7 @@ Before the final `DEPLOY` confirmation it checks DNS and sends one configuration
 After confirmation it:
 
 - Installs PostgreSQL, Nginx, Certbot, build tools, and the latest Node.js 24 LTS archive with a SHA-256 check against the official distribution manifest.
+- Adds a persistent 2 GB build swap file only when the VM has less than 3 GB total RAM plus swap, which makes `e2-micro` installation practical.
 - Installs locked npm dependencies, runs type checks, unit/HTTP tests and formatting checks, and builds the app under an unprivileged account.
 - Generates private database and signing secrets, applies migrations, and creates your administrator.
 - Seeds the complete demo: 40 approved exercises, workflow examples, fictional users, progress, and three events including archived results. Seed accounts use your separately entered password, not a hardcoded public password.

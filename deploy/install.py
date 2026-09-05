@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Interactive demo installation, including fixtures, on a dedicated Ubuntu 24.04 GCP VM."""
+"""Interactive populated-demo installer for a dedicated Debian or Ubuntu GCP VM."""
 
 import argparse
 import getpass
@@ -25,6 +25,10 @@ APP = Path('/opt/flagarena')
 STATE = Path('/var/lib/flagarena')
 ENV_FILE = Path('/etc/flagarena.env')
 STAGE = 'preflight'
+SUPPORTED_OS = {
+    'debian': {'12', '13'},
+    'ubuntu': {'22.04', '24.04'},
+}
 
 
 def require(condition, message):
@@ -36,6 +40,20 @@ def one_line(value):
     require(not any(ord(c) < 32 or ord(c) == 127 for c in value),
             'Values must not contain newlines or control characters.')
     return value
+
+
+def os_release(content):
+    values = {}
+    for line in content.splitlines():
+        if '=' not in line or line.startswith('#'):
+            continue
+        key, value = line.split('=', 1)
+        values[key] = value.strip().strip('"').strip("'")
+    name = values.get('ID', '').lower()
+    version = values.get('VERSION_ID', '')
+    require(version in SUPPORTED_OS.get(name, set()),
+            f"Unsupported operating system: {name or 'unknown'} {version or 'unknown'}. Use Debian 12/13 or Ubuntu 22.04/24.04 LTS.")
+    return name, version
 
 
 def domain_name(value):
@@ -118,7 +136,7 @@ def validate_dns(config):
 
 
 def collect():
-    print('FlagArena · populated demo installation on Ubuntu 24.04\n')
+    print('FlagArena · populated demo installation on Debian or Ubuntu\n')
     print('All settings are collected before packages, databases, or services are changed.\nCtrl+C cancels. Passwords and the API key are hidden.\n')
     config = {}
     config['domain'] = ask('Public hostname (for example arena.example.com)', validate=domain_name)
@@ -252,9 +270,38 @@ def install_node():
         link.symlink_to(node_dir / 'bin' / name)
 
 
+def ensure_build_memory():
+    """Add private swap on very small VMs so npm/Vite builds do not get OOM-killed."""
+    memory = {}
+    for line in Path('/proc/meminfo').read_text().splitlines():
+        if ':' in line:
+            key, value = line.split(':', 1)
+            memory[key] = int(value.strip().split()[0]) * 1024
+    available = memory.get('MemTotal', 0) + memory.get('SwapTotal', 0)
+    if available >= 3 * 1024**3:
+        return
+    swap = Path('/swapfile')
+    require(not swap.exists(), '/swapfile exists but total build memory is still below 3 GB. Configure working swap before rerunning.')
+    size = 2 * 1024**3
+    require(shutil.disk_usage('/').free >= size + 4 * 1024**3,
+            'This small VM needs 2 GB of build swap and at least 4 GB additional free disk space.')
+    print('Small VM detected; creating a private 2 GB swap file for dependency installation and builds.')
+    if shutil.which('fallocate'):
+        run(['fallocate', '-l', '2G', str(swap)])
+    else:
+        run(['dd', 'if=/dev/zero', f'of={swap}', 'bs=1M', 'count=2048', 'status=none'])
+    swap.chmod(0o600)
+    run(['mkswap', str(swap)], capture=True)
+    run(['swapon', str(swap)])
+    with open('/etc/fstab', 'a') as fstab:
+        fstab.write('/swapfile none swap sw 0 0\n')
+
+
 def install(config):
     global STAGE
     base_env = dict(os.environ, PATH='/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin', DEBIAN_FRONTEND='noninteractive')
+    STAGE = 'build memory preparation'
+    ensure_build_memory()
     STAGE = 'operating system packages'
     run(['apt-get', 'update'], env=base_env)
     run(['apt-get', 'install', '-y', 'ca-certificates', 'curl', 'rsync', 'xz-utils', 'build-essential', 'postgresql', 'nginx', 'certbot'], env=base_env)
@@ -342,8 +389,7 @@ def install(config):
 def preflight():
     require(sys.platform == 'linux' and os.geteuid() == 0, 'Run with sudo on the target Linux VM.')
     require(platform.machine() in ('x86_64', 'aarch64'), 'Use an x86_64 or arm64 VM.')
-    release = Path('/etc/os-release').read_text()
-    require('ID=ubuntu\n' in release and 'VERSION_ID="24.04"' in release, 'This installer targets Ubuntu 24.04 LTS.')
+    os_release(Path('/etc/os-release').read_text())
     require(sys.stdin.isatty(), 'Run over an interactive SSH terminal. GCP metadata startup scripts cannot prompt.')
     require(not APP.exists() and not ENV_FILE.exists(), 'An installation or partial installation already exists. This is a first-install script; see the recovery instructions in docs/deployment.md.')
     require(not Path('/etc/nginx/sites-available/flagarena').exists(), 'An existing FlagArena Nginx site was found.')
