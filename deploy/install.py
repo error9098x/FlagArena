@@ -104,7 +104,10 @@ def ask(label, default='', validate=one_line, secret=False):
 
 
 def fetch(url, data=None, headers=None, timeout=25):
-    request = urllib.request.Request(url, data=data, headers=headers or {})
+    # Resend sits behind a CDN that rejects the default Python-urllib agent.
+    headers = dict(headers or {})
+    headers.setdefault('User-Agent', 'FlagArena-Installer/1.0 (+https://github.com/error9098x/FlagArena)')
+    request = urllib.request.Request(url, data=data, headers=headers)
     with urllib.request.urlopen(request, timeout=timeout) as response:
         return response.read()
 
@@ -125,7 +128,8 @@ def validate_mail(config):
         }))
         require(bool(response.get('id')), 'Resend did not accept the test message.')
     except urllib.error.HTTPError as error:
-        raise RuntimeError(f'Resend rejected the configuration (HTTP {error.code}). Check the API key, sending permission, verified sender domain, and account limits.') from None
+        detail = error.read().decode('utf-8', 'replace')[:200].strip()
+        raise RuntimeError(f'Resend rejected the configuration (HTTP {error.code}): {detail}. Check the API key, sending permission, verified sender domain, and account limits.') from None
     print('Resend accepted the test message for the configured sender.')
 
 
