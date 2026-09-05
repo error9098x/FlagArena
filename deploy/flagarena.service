@@ -1,0 +1,24 @@
+[Unit]
+Description=FlagArena API
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=flagarena
+Group=flagarena
+WorkingDirectory=/opt/flagarena/backend
+EnvironmentFile=/etc/flagarena.env
+ExecStart=/usr/bin/node /opt/flagarena/backend/dist/server.js
+Restart=on-failure
+RestartSec=5
+TimeoutStopSec=30
+UMask=0077
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectHome=true
+ProtectSystem=strict
+ReadWritePaths=/var/lib/flagarena
+
+[Install]
+WantedBy=multi-user.target

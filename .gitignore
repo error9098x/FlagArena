@@ -1,0 +1,33 @@
+node_modules/
+dist/
+.env
+.env.*
+!.env.example
+var/
+*.tsbuildinfo
+coverage/
+
+# Local state, credentials, logs and editor metadata
+.DS_Store
+*.log
+*.pem
+*.key
+*.dump
+*.sql.gz
+.idea/
+.vscode/
+.agents/
+.codex/
+__pycache__/
+*.pyc
+.venv/
+
+# Reports and scratch outputs; README assets live in docs/assets
+/output/
+/tmp/
+/temp/
+/reports/
+/initial-report*
+/initial_report*
+/playwright-report/
+/test-results/
